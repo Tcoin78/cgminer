@@ -14,6 +14,8 @@
 
 #ifndef LINUX
 
+struct device_drv ants1_drv = { ... };
+
 #ifdef USE_ANT_S1
 static void ants1_detect(__maybe_unused bool hotplug)
 {

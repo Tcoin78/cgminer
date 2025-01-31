@@ -10,6 +10,8 @@
 
 #include "config.h"
 
+struct device_drv modminer_drv = { ... };
+
 #include <stdarg.h>
 #include <stdio.h>
 #include <unistd.h>

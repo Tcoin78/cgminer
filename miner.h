@@ -1,10 +1,94 @@
-#ifndef __MINER_H__
-#define __MINER_H__
+#pragma once
+#ifndef MINER_H
+#define MINER_H
 
 #include "config.h"
+#include <stdbool.h>  // Fix bool errors
+#include <stdint.h>   // Fix int64_t errors
+#include <stddef.h>   // Fix size_t errors
+struct work;
 
-#include <stdbool.h>
+// Define missing structs
+//struct thr_info {
+//    int thread_id;
+//    struct cgpu_info *cgpu;
+    // Add other fields
+//};
+
+// Ensure these are defined before usage
+enum drv_driver {
+    DRIVER_AVALON,
+    DRIVER_ANTS1,
+    DRIVER_MODMINER,
+    DRIVER_BITFORCE,
+    DRIVER_1,
+    DRIVER_2
+};
+
+// Define struct device_drv before using it
+struct device_drv {
+    char *name;
+    int drv_id;
+    int max_diff;
+    int min_diff;
+    void (*get_statline)(void);  // Add function pointer
+    void (*hw_error)(void);
+    bool (*thread_init)(struct thr_info *);
+    bool (*scanwork)(struct thr_info *);
+    void (*get_api_stats)(void);
+    void (*flush_work)(void);
+    void (*hash_work)(void);
+};
+
+#include "miner.h"
+
+struct device_drv avalon_drv = {
+    .drv_id = DRIVER_AVALON,
+    .name = "Avalon",
+    .max_diff = 65536,
+    .min_diff = 1,
+    .hw_error = NULL, // Assign proper function
+    .thread_init = NULL, // Assign proper function
+    .scanwork = NULL, // Assign proper function
+};
+
+extern void avalon_detect(bool hotplug);
+extern bool avalon_prepare(struct thr_info *thr);
+extern bool avalon_scanhash(struct thr_info *thr, struct work *work, int64_t max_nonce);
+extern void avalon_flush_work(struct cgpu_info *cgpu);
+extern struct api_data *avalon_api_stats(struct cgpu_info *cgpu);
+extern void get_avalon_statline_before(char *buf, size_t bufsiz, struct cgpu_info *cgpu);
+extern char *avalon_set_device(struct cgpu_info *cgpu, char *option, char *setting, char *replybuf);
+extern void avalon_init(struct cgpu_info *cgpu);
+extern void avalon_shutdown(struct thr_info *thr);
+
+//struct device_drv avalon_drv = {
+//    .name = "Avalon",
+//    .get_statline = NULL,  
+//    .get_api_stats = NULL,
+//};
+
+struct device_drv ants1_drv = {
+    .name = "AntMiner",
+    .get_statline = NULL,
+    .get_api_stats = NULL,
+};
+
+struct device_drv modminer_drv = {
+    .name = "ModMiner",
+    .get_statline = NULL,
+    .get_api_stats = NULL,
+};
+
+struct device_drv bitforce_drv = {
+    .name = "BitForce",
+    .get_statline = NULL,
+    .get_api_stats = NULL,
+};
+
 #include <stdint.h>
+#include <stdint.h>
+#include <stddef.h>
 #include <sys/time.h>
 #include <pthread.h>
 #include <jansson.h>
@@ -275,13 +359,16 @@ static inline int fsync (int fd)
 	ASIC_PARSE_COMMANDS(DRIVER_ADD_COMMAND)
 
 #define DRIVER_ENUM(X) DRIVER_##X,
+#ifdef DRIVER_PROTOTYPE
+#undef DRIVER_PROTOTYPE
+#endif
 #define DRIVER_PROTOTYPE(X) struct device_drv X##_drv;
 
 /* Create drv_driver enum from DRIVER_PARSE_COMMANDS macro */
-enum drv_driver {
-	DRIVER_PARSE_COMMANDS(DRIVER_ENUM)
-	DRIVER_MAX
-};
+//enum drv_driver {
+//	DRIVER_PARSE_COMMANDS(DRIVER_ENUM)
+//	DRIVER_MAX
+//};
 
 /* Use DRIVER_PARSE_COMMANDS to generate extern device_drv prototypes */
 DRIVER_PARSE_COMMANDS(DRIVER_PROTOTYPE)
@@ -309,75 +396,8 @@ struct strategies {
 	const char *s;
 };
 
-struct cgpu_info;
 
 extern void blank_get_statline_before(char *buf, size_t bufsiz, struct cgpu_info __maybe_unused *cgpu);
-
-struct api_data;
-struct thr_info;
-struct work;
-
-struct device_drv {
-	enum drv_driver drv_id;
-
-	char *dname;
-	char *name;
-
-	// DRV-global functions
-	void (*drv_detect)(bool);
-
-	// Device-specific functions
-	void (*reinit_device)(struct cgpu_info *);
-	void (*get_statline_before)(char *, size_t, struct cgpu_info *);
-	void (*get_statline)(char *, size_t, struct cgpu_info *);
-	struct api_data *(*get_api_stats)(struct cgpu_info *);
-	struct api_data *(*get_api_debug)(struct cgpu_info *);
-	bool (*get_stats)(struct cgpu_info *);
-	void (*identify_device)(struct cgpu_info *); // e.g. to flash a led
-	char *(*set_device)(struct cgpu_info *, char *option, char *setting, char *replybuf);
-
-	// Thread-specific functions
-	bool (*thread_prepare)(struct thr_info *);
-	uint64_t (*can_limit_work)(struct thr_info *);
-	bool (*thread_init)(struct thr_info *);
-	bool (*prepare_work)(struct thr_info *, struct work *);
-
-	/* Which hash work loop this driver uses. */
-	void (*hash_work)(struct thr_info *);
-	/* Two variants depending on whether the device divides work up into
-	 * small pieces or works with whole work items and may or may not have
-	 * a queue of its own. */
-	int64_t (*scanhash)(struct thr_info *, struct work *, int64_t);
-	int64_t (*scanwork)(struct thr_info *);
-
-	/* Used to extract work from the hash table of queued work and tell
-	 * the main loop that it should not add any further work to the table.
-	 */
-	bool (*queue_full)(struct cgpu_info *);
-	/* Tell the driver of a block change */
-	void (*flush_work)(struct cgpu_info *);
-	/* Tell the driver of an updated work template for eg. stratum */
-	void (*update_work)(struct cgpu_info *);
-
-	void (*hw_error)(struct thr_info *);
-	void (*thread_shutdown)(struct thr_info *);
-	void (*thread_enable)(struct thr_info *);
-
-	/* What should be zeroed in this device when global zero stats is sent */
-	void (*zero_stats)(struct cgpu_info *);
-
-	// Does it need to be free()d?
-	bool copy;
-
-	/* Highest target diff the device supports */
-	double max_diff;
-
-	/* Lowest diff the controller can safely run at */
-	double min_diff;
-
-	/* Does this device generate work itself and not require stratum work generation? */
-	bool genwork;
-};
 
 extern struct device_drv *copy_drv(struct device_drv*);
 
@@ -448,6 +468,7 @@ struct cgminer_pool_stats {
 };
 
 struct cgpu_info {
+	char name[64];
 	int cgminer_id;
 	struct device_drv *drv;
 	int device_id;
@@ -1429,6 +1450,8 @@ struct pool {
 #define GETWORK_MODE_SOLO 'C'
 
 struct work {
+	int64_t nonce;
+	int64_t difficulty;
 	unsigned char	data[128];
 	unsigned char	midstate[32];
 	unsigned char   midstate1[32];

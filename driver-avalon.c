@@ -10,7 +10,10 @@
  * any later version.  See COPYING for more details.
  */
 
+#ifdef USE_AVALON
+
 #include "config.h"
+extern bool avalon_prepare(struct thr_info *thr);
 
 #include <limits.h>
 #include <pthread.h>
@@ -40,6 +43,25 @@
 #include "driver-avalon.h"
 #include "hexdump.c"
 #include "util.h"
+
+struct device_drv avalon_drv = {
+        .drv_id = DRIVER_avalon,
+        .dname = "avalon",
+        .name = "AVA",
+        .drv_detect = avalon_detect,
+        .thread_prepare = avalon_prepare,
+
+        .hash_work = hash_queued_work,
+        .queue_full = avalon_fill,
+        .scanwork = avalon_scanhash,
+        .flush_work = avalon_flush_work,
+
+        .get_api_stats = avalon_api_stats,
+        .get_statline_before = get_avalon_statline_before,
+        .set_device = avalon_set_device,
+        .reinit_device = avalon_init,
+        .thread_shutdown = avalon_shutdown,
+};
 
 int opt_avalon_temp = AVALON_TEMP_TARGET;
 int opt_avalon_overheat = AVALON_TEMP_OVERHEAT;
@@ -1688,23 +1710,5 @@ static char *avalon_set_device(struct cgpu_info *avalon, char *option, char *set
 
 	sprintf(replybuf, "Unknown option: %s", option);
 	return replybuf;
-}
-
-struct device_drv avalon_drv = {
-	.drv_id = DRIVER_avalon,
-	.dname = "avalon",
-	.name = "AVA",
-	.drv_detect = avalon_detect,
-	.thread_prepare = avalon_prepare,
-
-	.hash_work = hash_queued_work,
-	.queue_full = avalon_fill,
-	.scanwork = avalon_scanhash,
-	.flush_work = avalon_flush_work,
-
-	.get_api_stats = avalon_api_stats,
-	.get_statline_before = get_avalon_statline_before,
-	.set_device = avalon_set_device,
-	.reinit_device = avalon_init,
-	.thread_shutdown = avalon_shutdown,
 };
+#endif 

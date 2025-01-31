@@ -119,7 +119,7 @@ void b58tobin(unsigned char *b58bin, const char *b58);
 void address_to_pubkeyhash(unsigned char *pkh, const char *addr);
 int ser_number(unsigned char *s, int32_t val);
 unsigned char *ser_string(char *s, int *slen);
-int thr_info_create(struct thr_info *thr, pthread_attr_t *attr, void *(*start) (void *), void *arg);
+int thr_info_create(struct thr_info *thr, pthread_attr_t *attr, void *(*start_routine)(void *), void *arg);
 void thr_info_cancel(struct thr_info *thr);
 void cgcond_time(struct timespec *abstime);
 void cgtime(struct timeval *tv);

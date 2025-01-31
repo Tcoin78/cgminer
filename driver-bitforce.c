@@ -11,6 +11,22 @@
 
 #include "config.h"
 
+struct device_drv bitforce_drv = {
+	.drv_id = DRIVER_bitforce,
+	.dname = "BitForce",
+	.name = "BFL",
+	.drv_detect = bitforce_detect,
+	.get_api_stats = bitforce_api_stats,
+	.get_statline_before = get_bitforce_statline_before,
+	.get_stats = bitforce_get_stats,
+	.identify_device = bitforce_identify,
+	.thread_prepare = bitforce_thread_prepare,
+	.thread_init = bitforce_thread_init,
+	.scanhash = bitforce_scanhash,
+	.thread_shutdown = bitforce_shutdown,
+	.thread_enable = biforce_thread_enable
+};
+
 #include <limits.h>
 #include <pthread.h>
 #include <stdint.h>
@@ -729,20 +745,4 @@ static struct api_data *bitforce_api_stats(struct cgpu_info *cgpu)
 	root = api_add_uint(root, "Avg Wait", &(cgpu->avg_wait_d), false);
 
 	return root;
-}
-
-struct device_drv bitforce_drv = {
-	.drv_id = DRIVER_bitforce,
-	.dname = "BitForce",
-	.name = "BFL",
-	.drv_detect = bitforce_detect,
-	.get_api_stats = bitforce_api_stats,
-	.get_statline_before = get_bitforce_statline_before,
-	.get_stats = bitforce_get_stats,
-	.identify_device = bitforce_identify,
-	.thread_prepare = bitforce_thread_prepare,
-	.thread_init = bitforce_thread_init,
-	.scanhash = bitforce_scanhash,
-	.thread_shutdown = bitforce_shutdown,
-	.thread_enable = biforce_thread_enable
 };

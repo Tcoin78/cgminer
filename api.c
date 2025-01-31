@@ -26,6 +26,9 @@
 #include "util.h"
 #include "klist.h"
 
+struct thr_info *thr_ptr = &bye_thr;
+thr_info_create(thr_ptr, NULL, quit_thread, thr_ptr);
+
 #if defined(USE_BFLSC) || defined(USE_AVALON) || defined(USE_AVALON2) || defined(USE_AVALON4) || \
   defined(USE_HASHFAST) || defined(USE_BITFURY) || defined(USE_BITFURY16) || defined(USE_BLOCKERUPTER) || defined(USE_KLONDIKE) || \
 	defined(USE_KNC) || defined(USE_BAB) || defined(USE_DRAGONMINT_T1) || defined(USE_DRILLBIT) || \
@@ -3175,7 +3178,7 @@ static void devdetails(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __m
 		root = api_add_int(root, "DEVDETAILS", &i, false);
 		root = api_add_string(root, "Name", cgpu->drv->name, false);
 		root = api_add_int(root, "ID", &(cgpu->device_id), false);
-		root = api_add_string(root, "Driver", cgpu->drv->dname, false);
+		root = api_add_string(root, "Driver", cgpu->drv->name, false);
 		root = api_add_const(root, "Kernel", cgpu->kname ? : BLANK, false);
 		root = api_add_const(root, "Model", cgpu->name ? : BLANK, false);
 		root = api_add_const(root, "Device Path", cgpu->device_path ? : BLANK, false);
